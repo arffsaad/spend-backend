@@ -4,7 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
 import cyou.arfsd.spendbackend.Models.Reloads;
+import cyou.arfsd.spendbackend.Models.User;
 import cyou.arfsd.spendbackend.Repositories.ReloadsRepository;
+import cyou.arfsd.spendbackend.Repositories.UserRepository;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +26,9 @@ public class ReloadsController {
     @Autowired
     private ReloadsRepository reloadsRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @GetMapping("/user/{id}")
     public Iterable<Reloads> getUserReloads(@PathVariable Integer id) {
         return reloadsRepository.findByUserid(id);
@@ -39,6 +44,10 @@ public class ReloadsController {
         Timestamp currentTime = new Timestamp(System.currentTimeMillis());
         reload.setCreatedtime(currentTime);
         reloadsRepository.save(reload);
+        // once reload saved, update user balance
+        User user = userRepository.findById(reload.getUserid()).get();
+        user.setBalance(user.getBalance() + reload.getAmount());
+        userRepository.save(user);
 
         Map<String, Object> response = Map.of(
             "status", "success",

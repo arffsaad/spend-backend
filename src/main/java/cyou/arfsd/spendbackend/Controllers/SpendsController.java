@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import cyou.arfsd.spendbackend.Models.Spends;
+import cyou.arfsd.spendbackend.Models.User;
 import cyou.arfsd.spendbackend.Repositories.SpendsRepository;
+import cyou.arfsd.spendbackend.Repositories.UserRepository;
 
 @RestController
 @RequestMapping("/api/v1/spending")
@@ -22,17 +24,32 @@ public class SpendsController {
     @Autowired
     private SpendsRepository spendsRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @GetMapping("/{spendingid}")
+    public Spends getSpendsById(@PathVariable("spendingid") Integer spendingid) {
+        // TODO : handle exception if not found
+        return spendsRepository.findById(spendingid).get();
+    }
+
     @GetMapping("/user/{id}")
-    public Iterable<Spends> getSpendsByUserId(@PathVariable("id") Integer id) {
-        return spendsRepository.findByUserid(id);
+    public Map<String,Object> getSpendsByUserId(@PathVariable("id") Integer id) {
+        Iterable<Spends> spends = spendsRepository.findByUserid(id);
+        Integer sumOfUnfulfilledAmounts = 0;
+        if (spendsRepository.UnfulfilledSpends() != 0) {
+            sumOfUnfulfilledAmounts = spendsRepository.getSumOfUnfulfilledAmounts(id);
+        }
+        Map<String, Object> response = Map.of(
+            "status", "success",
+            "message", "spendings retrieved",
+            "data", spends,
+            "UnfulfilledAmount", sumOfUnfulfilledAmounts
+        );
+        return response;
     }
 
-    @GetMapping("/{id}")
-    public Spends getSpendsById(@PathVariable("id") Integer id) {
-        return spendsRepository.findById(id).get();
-    }
-
-    @PostMapping("/create")
+    @PostMapping("/create") // TODO : Change request accept as Formdata to accommodate for image upload
     public @ResponseBody Map<String, Object> createSpends(@RequestBody Map<String, Object> payload) {
         Spends spends = new Spends();
         spends.setUserid((Integer) payload.get("userid"));
@@ -41,9 +58,18 @@ public class SpendsController {
         // TODO : implement minio here and get the slug for file.
         spends.setRecslug("exampleSlug");
         // END TODO
-        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
-        spends.setFulfilled_at(currentTime); 
-        spendsRepository.save(spends);
+        if ((Boolean) payload.get("fulfilled") == true) {
+            Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+            spends.setFulfilled_at(currentTime);
+            spendsRepository.save(spends);
+            User user = userRepository.findById(spends.getUserid()).get();
+            user.setBalance(user.getBalance() - spends.getAmount());
+            userRepository.save(user);
+        }
+        else {
+            spends.setFulfilled_at(null);
+            spendsRepository.save(spends);
+        }
 
         Map<String, Object> response = Map.of(
             "status", "success",
@@ -54,10 +80,37 @@ public class SpendsController {
         return response;
     }
 
+    @PostMapping("/fulfill/{id}")
+    public @ResponseBody Map<String, Object> fulfillSpends(@PathVariable("id") Integer id) {
+        Spends spends = spendsRepository.findById(id).get();
+        if (spends.getFulfilled_at() == null) {
+            Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+            spends.setFulfilled_at(currentTime);
+            spendsRepository.save(spends);
+            User user = userRepository.findById(spends.getUserid()).get();
+            user.setBalance(user.getBalance() - spends.getAmount());
+            userRepository.save(user);
+        }
+
+        Map<String, Object> response = Map.of(
+            "status", "success",
+            "message", "spending fulfilled",
+            "data", spends
+        );
+
+        return response;
+    }
+
     @PatchMapping("/update/{id}")
     public @ResponseBody Map<String, Object> updateSpends(@PathVariable("id") Integer id, @RequestBody Map<String, Object> payload) {
         Spends spends = spendsRepository.findById(id).get();
         if (payload.containsKey("amount")) {
+            if (spends.getFulfilled_at() != null) {
+                User user = userRepository.findById(spends.getUserid()).get();
+                user.setBalance(user.getBalance() + spends.getAmount());
+                user.setBalance(user.getBalance() - (Integer) payload.get("amount"));
+                userRepository.save(user);
+            }
             spends.setAmount((Integer) payload.get("amount"));
         }
         if (payload.containsKey("remark")) {
@@ -66,14 +119,29 @@ public class SpendsController {
         if (payload.containsKey("recslug")) {
             spends.setRecslug((String) payload.get("recslug"));
         }
-        if (payload.containsKey("fulfilled_at")) {
-            spends.setFulfilled_at(Timestamp.valueOf((String) payload.get("fulfilled_at")));
-        }
         spendsRepository.save(spends);
 
         Map<String, Object> response = Map.of(
             "status", "success",
             "message", "spending updated",
+            "data", spends
+        );
+
+        return response;
+    }
+
+    @PostMapping("/reverse/{id}")
+    public @ResponseBody Map<String, Object> reverseSpends(@PathVariable("id") Integer id) {
+        Spends spends = spendsRepository.findById(id).get();
+        spends.setFulfilled_at(null);
+        spendsRepository.save(spends);
+        User user = userRepository.findById(spends.getUserid()).get();
+        user.setBalance(user.getBalance() + spends.getAmount());
+        userRepository.save(user);
+
+        Map<String, Object> response = Map.of(
+            "status", "success",
+            "message", "spending reversed",
             "data", spends
         );
 
