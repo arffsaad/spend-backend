@@ -4,3 +4,7 @@ spring.datasource.username=databaseUser
 spring.datasource.password=databasePass
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 #spring.jpa.show-sql: true
+
+## MINIO/S3 CREDENTIALS ##
+minio.auth.accessKey=S3/MINIOACCESSKEY
+minio.auth.secretKey=S3/MINIOSECRETKEY

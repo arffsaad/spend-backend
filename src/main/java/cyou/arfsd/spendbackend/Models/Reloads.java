@@ -16,6 +16,7 @@ public class Reloads {
     private Integer id;
     private Integer userid;
     private Integer amount;
+    private Integer walletid;
     private String remark;
 
     @Column(name = "createdtime", nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
@@ -44,6 +45,14 @@ public class Reloads {
 
     public void setAmount(Integer amount){
         this.amount=amount;
+    }
+
+    public Integer getWalletid() {
+        return walletid;
+    }
+
+    public void setWalletid(Integer walletid) {
+        this.walletid=walletid;
     }
 
     public String getRemark(){

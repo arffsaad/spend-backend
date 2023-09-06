@@ -24,8 +24,16 @@ public class HoldsController {
     private HoldsRepository holdsRepository;
     
     @GetMapping("/user/{id}")
-    public Iterable<Holds> getHoldsByUserId(@PathVariable(value = "id") Integer userId) {
-        return holdsRepository.findByUserid(userId);
+    public Map<String, Object> getHoldsByUserId(@PathVariable(value = "id") Integer userId) {
+        Iterable<Holds> holds = holdsRepository.findByUserid(userId);
+
+        Map<String, Object> response = Map.of(
+            "status", "success",
+            "message", "holds retrieved",
+            "data", holds
+        );
+
+        return response;
     }
 
     @GetMapping("/{id}")
@@ -48,6 +56,8 @@ public class HoldsController {
         holds.setRemark((String) payload.get("remark"));
 
         Map<String, Object> response = Map.of(
+            "status", "success",
+            "message", "hold created",
             "data", holds
         );
 

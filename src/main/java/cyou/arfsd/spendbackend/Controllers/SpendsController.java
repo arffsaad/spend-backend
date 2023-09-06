@@ -10,13 +10,18 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import cyou.arfsd.spendbackend.Models.Spends;
 import cyou.arfsd.spendbackend.Models.User;
+import cyou.arfsd.spendbackend.Models.Wallets;
 import cyou.arfsd.spendbackend.Repositories.SpendsRepository;
 import cyou.arfsd.spendbackend.Repositories.UserRepository;
+import cyou.arfsd.spendbackend.Repositories.WalletsRepository;
+import cyou.arfsd.spendbackend.Utils.MinioHelper;
 
 @RestController
 @RequestMapping("/api/v1/spending")
@@ -26,6 +31,9 @@ public class SpendsController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private WalletsRepository walletRepository;
 
     @GetMapping("/{spendingid}")
     public Spends getSpendsById(@PathVariable("spendingid") Integer spendingid) {
@@ -50,26 +58,44 @@ public class SpendsController {
     }
 
     @PostMapping("/create") // TODO : Change request accept as Formdata to accommodate for image upload
-    public @ResponseBody Map<String, Object> createSpends(@RequestBody Map<String, Object> payload) {
+    public @ResponseBody Map<String, Object> createSpends(
+        @RequestParam("userid") Integer userid, 
+        @RequestParam("amount") Integer amount, 
+        @RequestParam("remark") String remark,
+        @RequestParam("walletid") Integer walletid,
+        @RequestParam("fulfilled") Boolean fulfilled, 
+        @RequestParam("receipt") MultipartFile receipt) {
         Spends spends = new Spends();
-        spends.setUserid((Integer) payload.get("userid"));
-        spends.setAmount((Integer) payload.get("amount"));
-        spends.setRemark((String) payload.get("remark"));
-        // TODO : implement minio here and get the slug for file.
-        spends.setRecslug("exampleSlug");
-        // END TODO
-        if ((Boolean) payload.get("fulfilled") == true) {
+        spends.setUserid(userid);
+        spends.setAmount(amount);
+        spends.setRemark(remark);
+        spends.setWalletid(walletid);
+        
+        Wallets wallet = walletRepository.findById(spends.getWalletid()).get();
+        User user = userRepository.findById(spends.getUserid()).get();
+        
+        if (fulfilled) {
+            if (wallet.getAmount() < spends.getAmount()) {
+                Map<String, Object> response = Map.of(
+                    "status", "failed",
+                    "message", "insufficient balance"
+                );
+                return response;
+            }
             Timestamp currentTime = new Timestamp(System.currentTimeMillis());
             spends.setFulfilled_at(currentTime);
-            spendsRepository.save(spends);
-            User user = userRepository.findById(spends.getUserid()).get();
-            user.setBalance(user.getBalance() - spends.getAmount());
-            userRepository.save(user);
+            wallet.setAmount(wallet.getAmount() - spends.getAmount());
         }
         else {
             spends.setFulfilled_at(null);
-            spendsRepository.save(spends);
+            
         }
+
+        MinioHelper minioHelper = new MinioHelper("http://192.168.187.108:30900/", "spend-bucket", user.getName());
+        Map<String, Object> uploadResponse = minioHelper.UploadFile(receipt, "spend-bucket", user.getName());
+        spends.setRecslug( "/" + uploadResponse.get("fileName").toString());
+        spendsRepository.save(spends);
+        walletRepository.save(wallet);
 
         Map<String, Object> response = Map.of(
             "status", "success",
@@ -84,12 +110,19 @@ public class SpendsController {
     public @ResponseBody Map<String, Object> fulfillSpends(@PathVariable("id") Integer id) {
         Spends spends = spendsRepository.findById(id).get();
         if (spends.getFulfilled_at() == null) {
+            Wallets wallet = walletRepository.findById(spends.getWalletid()).get();
+            if (wallet.getAmount() < spends.getAmount()) {
+                Map<String, Object> response = Map.of(
+                    "status", "failed",
+                    "message", "insufficient balance"
+                );
+                return response;
+            }
             Timestamp currentTime = new Timestamp(System.currentTimeMillis());
             spends.setFulfilled_at(currentTime);
             spendsRepository.save(spends);
-            User user = userRepository.findById(spends.getUserid()).get();
-            user.setBalance(user.getBalance() - spends.getAmount());
-            userRepository.save(user);
+            wallet.setAmount(wallet.getAmount() - spends.getAmount());
+            walletRepository.save(wallet);
         }
 
         Map<String, Object> response = Map.of(
@@ -106,18 +139,15 @@ public class SpendsController {
         Spends spends = spendsRepository.findById(id).get();
         if (payload.containsKey("amount")) {
             if (spends.getFulfilled_at() != null) {
-                User user = userRepository.findById(spends.getUserid()).get();
-                user.setBalance(user.getBalance() + spends.getAmount());
-                user.setBalance(user.getBalance() - (Integer) payload.get("amount"));
-                userRepository.save(user);
+                Wallets wallet = walletRepository.findById(spends.getWalletid()).get();
+                wallet.setAmount(wallet.getAmount() + spends.getAmount());
+                wallet.setAmount(wallet.getAmount() - (Integer) payload.get("amount"));
+                walletRepository.save(wallet);
             }
             spends.setAmount((Integer) payload.get("amount"));
         }
         if (payload.containsKey("remark")) {
             spends.setRemark((String) payload.get("remark"));
-        }
-        if (payload.containsKey("recslug")) {
-            spends.setRecslug((String) payload.get("recslug"));
         }
         spendsRepository.save(spends);
 
@@ -133,12 +163,13 @@ public class SpendsController {
     @PostMapping("/reverse/{id}")
     public @ResponseBody Map<String, Object> reverseSpends(@PathVariable("id") Integer id) {
         Spends spends = spendsRepository.findById(id).get();
-        spends.setFulfilled_at(null);
-        spendsRepository.save(spends);
-        User user = userRepository.findById(spends.getUserid()).get();
-        user.setBalance(user.getBalance() + spends.getAmount());
-        userRepository.save(user);
-
+        if (spends.getFulfilled_at() != null) {
+            spends.setFulfilled_at(null);
+            spendsRepository.save(spends);
+            Wallets wallet = walletRepository.findById(spends.getWalletid()).get();
+            wallet.setAmount(wallet.getAmount() + spends.getAmount());
+            walletRepository.save(wallet);
+        }
         Map<String, Object> response = Map.of(
             "status", "success",
             "message", "spending reversed",

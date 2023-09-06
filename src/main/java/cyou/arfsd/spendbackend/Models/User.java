@@ -1,6 +1,5 @@
 package cyou.arfsd.spendbackend.Models;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -24,9 +23,6 @@ public class User {
 
     private String email;
 
-    @Column(name = "balance", nullable = false, columnDefinition = "INT DEFAULT 0")
-    private Integer balance;
-
     public Integer getId() {
         return id;
     }
@@ -49,13 +45,5 @@ public class User {
 
     public void setEmail(String email){
         this.email=email;
-    }
-
-    public Integer getBalance(){
-        return balance;
-    }
-
-    public void setBalance(Integer balance){
-        this.balance=balance;
     }
 }

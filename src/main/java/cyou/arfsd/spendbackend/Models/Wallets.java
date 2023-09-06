@@ -9,19 +9,18 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 @Entity
-public class Spends {
+public class Wallets {
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
 
     private Integer id;
+    private String name;
     private Integer userid;
     private Integer amount;
-    private Integer walletid;
-    private String remark;
-    private String recslug;
 
-    @Column(name = "fulfilled_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private Timestamp fulfilled_at;
+    @Column(name = "createdtime", nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    private Timestamp createdtime;
+    
 
     public Integer getId() {
         return id;
@@ -47,35 +46,19 @@ public class Spends {
         this.amount=amount;
     }
 
-    public Integer getWalletid() {
-        return walletid;
+    public String getName(){
+        return name;
     }
 
-    public void setWalletid(Integer walletid) {
-        this.walletid=walletid;
+    public void setName(String name){
+        this.name=name;
     }
 
-    public String getRemark(){
-        return remark;
+    public Timestamp getCreatedtime(){
+        return createdtime;
     }
 
-    public void setRemark(String remark){
-        this.remark=remark;
-    }
-
-    public Timestamp getFulfilled_at(){
-        return fulfilled_at;
-    }
-
-    public void setFulfilled_at(Timestamp fulfilled_at){
-        this.fulfilled_at=fulfilled_at;
-    }
-
-    public String getRecslug(){
-        return recslug;
-    }
-
-    public void setRecslug(String recslug){
-        this.recslug=recslug;
+    public void setCreatedtime(Timestamp createdtime){
+        this.createdtime=createdtime;
     }
 }

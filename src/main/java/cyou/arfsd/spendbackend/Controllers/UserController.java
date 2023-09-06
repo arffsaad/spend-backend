@@ -45,7 +45,6 @@ public class UserController {
         user.setName((String) payload.get("name"));
         user.setEmail((String) payload.get("email"));
         // password mana bro
-        user.setBalance(0);
         userRepository.save(user);
 
         // once we implement proper auth, return auth token here (API token/secret/or wtv the fuck token we use) as to allow auto login after reg

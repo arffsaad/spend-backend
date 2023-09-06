@@ -1,0 +1,12 @@
+{"properties": [
+  {
+    "name": "minio.auth.accessKey",
+    "type": "java.lang.String",
+    "description": "Minio Access Key with R/W access"
+  },
+  {
+    "name": "minio.auth.secretKey",
+    "type": "java.lang.String",
+    "description": "Minio Secret Key with R/W access"
+  }
+]}
