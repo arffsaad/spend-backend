@@ -26,10 +26,12 @@ public class MinioHelper {
     private String secretKey;
 
     public MinioHelper(String endpoint, String bucketName, String user) {
+        this.accessKey = "spr1ngb00t";
+        this.secretKey = "spr1ngb00t";
         try {
             this.minioClient = MinioClient.builder()
                 .endpoint(endpoint)
-                .credentials("spr1ngb00t", "spr1ngb00t")
+                .credentials(accessKey, secretKey)
                 .build();
             boolean found = this.minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
             if (!found) {

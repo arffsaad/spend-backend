@@ -1,7 +1,9 @@
 package cyou.arfsd.spendbackend.Controllers;
 
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,8 +34,20 @@ public class WalletsController {
     }
 
     @GetMapping("/{id}") // Get wallet by id
-    public Wallets getWalletById(@PathVariable Integer id) {
-        return walletRepository.findById(id).get();
+    public Map<String, Object> getWalletById(@PathVariable Integer id) {
+        Optional<Wallets> wallet = walletRepository.findById(id);
+        List<Map<String, Object>> reloads = walletRepository.fiveReloads(id);
+        List<Map<String, Object>> spends = walletRepository.fiveSpends(id);
+        Map<String, Object> response = Map.of(
+            "id", wallet.get().getId(),
+            "name", wallet.get().getName(),
+            "amount", wallet.get().getAmount(),
+            "createdtime", wallet.get().getCreatedtime(),
+            "userid", wallet.get().getUserid(),
+            "reloads", reloads,
+            "spends", spends
+        );
+        return response;
     }
 
     @PostMapping("/create") // Create new wallet
@@ -44,6 +58,8 @@ public class WalletsController {
         Integer initialAmt = (Integer) payload.get("amount");
         Timestamp currentTime = new Timestamp(System.currentTimeMillis());
         wallet.setCreatedtime(currentTime);
+        wallet.setAmount(initialAmt);
+        walletRepository.save(wallet);
         if (initialAmt != 0) {
             Reloads reload = new Reloads();
             reload.setUserid(wallet.getUserid());
@@ -52,9 +68,7 @@ public class WalletsController {
             reload.setWalletid(wallet.getId());
             reload.setCreatedtime(currentTime);
             reloadsRepository.save(reload);
-            wallet.setAmount(initialAmt);
         }
-        walletRepository.save(wallet);
 
         Map<String, Object> response = Map.of(
             "status", "success",

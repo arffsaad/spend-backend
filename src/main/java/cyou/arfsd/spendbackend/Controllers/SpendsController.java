@@ -1,6 +1,7 @@
 package cyou.arfsd.spendbackend.Controllers;
 
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +44,7 @@ public class SpendsController {
 
     @GetMapping("/user/{id}")
     public Map<String,Object> getSpendsByUserId(@PathVariable("id") Integer id) {
-        Iterable<Spends> spends = spendsRepository.findByUserid(id);
+        List<Map<String, Object>> spends = spendsRepository.userSummary(id);
         Integer sumOfUnfulfilledAmounts = 0;
         if (spendsRepository.UnfulfilledSpends() != 0) {
             sumOfUnfulfilledAmounts = spendsRepository.getSumOfUnfulfilledAmounts(id);
@@ -91,7 +92,7 @@ public class SpendsController {
             
         }
 
-        MinioHelper minioHelper = new MinioHelper("http://192.168.187.108:30900/", "spend-bucket", user.getName());
+        MinioHelper minioHelper = new MinioHelper("http://127.0.0.1:9898", "spend-bucket", user.getName());
         Map<String, Object> uploadResponse = minioHelper.UploadFile(receipt, "spend-bucket", user.getName());
         spends.setRecslug( "/" + uploadResponse.get("fileName").toString());
         spendsRepository.save(spends);
