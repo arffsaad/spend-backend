@@ -92,7 +92,7 @@ public class SpendsController {
             
         }
 
-        MinioHelper minioHelper = new MinioHelper("http://127.0.0.1:9898", "spend-bucket", user.getName());
+        MinioHelper minioHelper = new MinioHelper("http://127.0.0.1:9000", "spend-bucket", user.getName());
         Map<String, Object> uploadResponse = minioHelper.UploadFile(receipt, "spend-bucket", user.getName());
         spends.setRecslug( "/" + uploadResponse.get("fileName").toString());
         spendsRepository.save(spends);
