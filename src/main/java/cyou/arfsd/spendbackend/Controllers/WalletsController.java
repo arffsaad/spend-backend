@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 import cyou.arfsd.spendbackend.Models.Reloads;
 import cyou.arfsd.spendbackend.Models.Wallets;
 import cyou.arfsd.spendbackend.Repositories.ReloadsRepository;
+import cyou.arfsd.spendbackend.Repositories.SpendsRepository;
 import cyou.arfsd.spendbackend.Repositories.WalletsRepository;
+import jakarta.persistence.criteria.CriteriaBuilder.In;
 
 @RestController
 @RequestMapping("/api/v1/wallets")
@@ -28,6 +30,9 @@ public class WalletsController {
     @Autowired
     private ReloadsRepository reloadsRepository;
 
+    @Autowired
+    private SpendsRepository spendsRepository;
+
     @GetMapping("/user/{id}") // Get list of wallets for user
     public Iterable<Wallets> getUserWallets(@PathVariable Integer id) {
         return walletRepository.findByUserid(id);
@@ -38,6 +43,10 @@ public class WalletsController {
         Optional<Wallets> wallet = walletRepository.findById(id);
         List<Map<String, Object>> reloads = walletRepository.fiveReloads(id);
         List<Map<String, Object>> spends = walletRepository.fiveSpends(id);
+        Integer sumOfUnfulfilledAmounts = 0;
+        if (spendsRepository.UnfulfilledSpendsByWallet(id) != 0) {
+            sumOfUnfulfilledAmounts = walletRepository.walletSumOfUnfulfilledAmounts(id);
+        }
         Map<String, Object> response = Map.of(
             "id", wallet.get().getId(),
             "name", wallet.get().getName(),
@@ -45,7 +54,8 @@ public class WalletsController {
             "createdtime", wallet.get().getCreatedtime(),
             "userid", wallet.get().getUserid(),
             "reloads", reloads,
-            "spends", spends
+            "spends", spends,
+            "unfulfilledAmounts", sumOfUnfulfilledAmounts
         );
         return response;
     }

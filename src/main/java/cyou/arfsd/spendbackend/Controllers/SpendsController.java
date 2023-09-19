@@ -65,7 +65,7 @@ public class SpendsController {
         @RequestParam("remark") String remark,
         @RequestParam("walletid") Integer walletid,
         @RequestParam("fulfilled") Boolean fulfilled, 
-        @RequestParam("receipt") MultipartFile receipt) {
+        @RequestParam(value = "receipt", required = false) MultipartFile receipt) {
         Spends spends = new Spends();
         spends.setUserid(userid);
         spends.setAmount(amount);
@@ -91,10 +91,14 @@ public class SpendsController {
             spends.setFulfilled_at(null);
             
         }
-
-        MinioHelper minioHelper = new MinioHelper("http://127.0.0.1:9000", "spend-bucket", user.getName());
-        Map<String, Object> uploadResponse = minioHelper.UploadFile(receipt, "spend-bucket", user.getName());
-        spends.setRecslug( "/" + uploadResponse.get("fileName").toString());
+        if (receipt != null) {
+            MinioHelper minioHelper = new MinioHelper("http://127.0.0.1:9000", "spend-bucket", user.getName());
+            Map<String, Object> uploadResponse = minioHelper.UploadFile(receipt, "spend-bucket", user.getName());
+            spends.setRecslug( "/" + uploadResponse.get("fileName").toString());
+        }
+        else {
+            spends.setRecslug(null);
+        }
         spendsRepository.save(spends);
         walletRepository.save(wallet);
 

@@ -18,6 +18,9 @@ public interface SpendsRepository extends CrudRepository<Spends, Integer> {
     @Query(value = "SELECT COUNT(*) FROM spends WHERE fulfilled_at IS NULL", nativeQuery = true)
     Integer UnfulfilledSpends();
 
+    @Query(value = "SELECT COUNT(*) FROM spends WHERE walletid = ?1 AND fulfilled_at IS NULL", nativeQuery = true)
+    Integer UnfulfilledSpendsByWallet(Integer walletId);
+
     @Query(value = "SELECT s.*, w.name AS wallet FROM spends s LEFT JOIN wallets w ON w.id = s.walletid WHERE s.userid = ?1", nativeQuery = true)
     List<Map<String, Object>> userSummary(Integer userId);
 }

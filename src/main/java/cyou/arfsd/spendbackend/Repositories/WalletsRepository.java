@@ -23,4 +23,7 @@ public interface WalletsRepository extends CrudRepository<Wallets, Integer> {
 
     @Query(value = "SELECT * FROM reloads WHERE walletid =?1 ORDER BY id DESC LIMIT 5", nativeQuery = true)
     List<Map<String, Object>> fiveReloads(Integer walletId);
+
+    @Query(value = "SELECT SUM(amount) FROM spends WHERE walletid = ?1 AND fulfilled_at IS NULL", nativeQuery = true)
+    Integer walletSumOfUnfulfilledAmounts(Integer walletid);
 }
