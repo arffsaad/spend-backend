@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import cyou.arfsd.spendbackend.Models.User;
 import cyou.arfsd.spendbackend.Repositories.UserRepository;
+import cyou.arfsd.spendbackend.Utils.HashHelper;
 import cyou.arfsd.spendbackend.Utils.ResponseHelper;
 
 @RestController
@@ -21,6 +22,27 @@ import cyou.arfsd.spendbackend.Utils.ResponseHelper;
 public class UserController {
     @Autowired
     private UserRepository userRepository;
+
+    @PostMapping("/check")
+    public ResponseEntity<Map<String, Object>> checkUsername(@RequestBody Map<String, Object> payload) {
+        long existed = 0;
+        String type = (String) payload.get("type");
+        if (type.trim().equals("username")) {
+            existed = userRepository.countByName((String) payload.get("value"));
+        } else if (type.trim().equals("email")) {
+            existed = userRepository.countByEmail((String) payload.get("value"));
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseHelper().returnError("failed", "wrong type!"));
+        }
+        if (existed >= 1) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseHelper().returnError("failed", "exists"));
+        }
+        Map<String, Object> response = Map.of(
+            "message", "success",
+            "reason", "Please proceed"
+        );
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
 
     @GetMapping("/{id}")
     public Map<String, Object> getUser(@PathVariable(value = "id") Integer id) {
@@ -44,7 +66,12 @@ public class UserController {
         User user = new User();
         user.setName((String) payload.get("name"));
         user.setEmail((String) payload.get("email"));
-        // password mana bro
+        // password section
+        String unhashed = (String) payload.get("password");
+        HashHelper hashHelper = new HashHelper();
+        String hashed = hashHelper.generateHashed(unhashed);
+        user.setPassword(hashed);
+        // password end
         userRepository.save(user);
 
         // once we implement proper auth, return auth token here (API token/secret/or wtv the fuck token we use) as to allow auto login after reg

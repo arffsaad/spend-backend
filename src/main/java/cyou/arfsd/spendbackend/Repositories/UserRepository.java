@@ -8,4 +8,6 @@ public interface UserRepository extends CrudRepository<User, Integer> {
     User findByEmail(String email);
 
     Long countByEmail(String email);
+
+    Long countByName(String name);
 }

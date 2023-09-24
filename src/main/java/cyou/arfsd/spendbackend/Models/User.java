@@ -23,6 +23,26 @@ public class User {
 
     private String email;
 
+    private String password;
+
+    private String salt;
+
+    public String getSalt() {
+        return salt;
+    }
+
+    public void setSalt(String salt) {
+        this.salt = salt;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String salt) {
+        this.salt = salt;
+    }
+
     public Integer getId() {
         return id;
     }
