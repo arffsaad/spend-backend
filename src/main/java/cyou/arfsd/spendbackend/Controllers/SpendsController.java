@@ -1,5 +1,6 @@
 package cyou.arfsd.spendbackend.Controllers;
 
+import java.net.http.HttpRequest;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import cyou.arfsd.spendbackend.Repositories.SpendsRepository;
 import cyou.arfsd.spendbackend.Repositories.UserRepository;
 import cyou.arfsd.spendbackend.Repositories.WalletsRepository;
 import cyou.arfsd.spendbackend.Utils.MinioHelper;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/v1/spending")
@@ -37,13 +39,20 @@ public class SpendsController {
     private WalletsRepository walletRepository;
 
     @GetMapping("/{spendingid}")
-    public Spends getSpendsById(@PathVariable("spendingid") Integer spendingid) {
-        // TODO : handle exception if not found
-        return spendsRepository.findById(spendingid).get();
+    public Spends getSpendsById(@PathVariable("spendingid") Integer spendingid, HttpServletRequest request ) {
+        Integer userid = (Integer) request.getAttribute("userId");
+        Spends spend = spendsRepository.findById(spendingid).get();
+        if (!(userid.equals(spend.getUserid()))) {
+            return null; // TODO : fix return as response something and return err
+        }
+        else {
+            return spend;
+        }
     }
 
-    @GetMapping("/user/{id}")
-    public Map<String,Object> getSpendsByUserId(@PathVariable("id") Integer id) {
+    @GetMapping("/user")
+    public Map<String,Object> getSpendsByUserId(HttpServletRequest request) {
+        Integer id = (Integer) request.getAttribute("userId");
         List<Map<String, Object>> spends = spendsRepository.userSummary(id);
         Integer sumOfUnfulfilledAmounts = 0;
         if (spendsRepository.UnfulfilledSpends() != 0) {
@@ -60,14 +69,14 @@ public class SpendsController {
 
     @PostMapping("/create") // TODO : Change request accept as Formdata to accommodate for image upload
     public @ResponseBody Map<String, Object> createSpends(
-        @RequestParam("userid") Integer userid, 
+        HttpServletRequest request, 
         @RequestParam("amount") Integer amount, 
         @RequestParam("remark") String remark,
         @RequestParam("walletid") Integer walletid,
         @RequestParam("fulfilled") Boolean fulfilled, 
         @RequestParam(value = "receipt", required = false) MultipartFile receipt) {
         Spends spends = new Spends();
-        spends.setUserid(userid);
+        spends.setUserid((Integer) request.getAttribute("userId"));
         spends.setAmount(amount);
         spends.setRemark(remark);
         spends.setWalletid(walletid);
@@ -112,8 +121,15 @@ public class SpendsController {
     }
 
     @PostMapping("/fulfill/{id}")
-    public @ResponseBody Map<String, Object> fulfillSpends(@PathVariable("id") Integer id) {
+    public @ResponseBody Map<String, Object> fulfillSpends(@PathVariable("id") Integer id, HttpServletRequest request) {
         Spends spends = spendsRepository.findById(id).get();
+        if (!(spends.getUserid().equals((Integer) request.getAttribute("userId")))) {
+            Map<String, Object> response = Map.of(
+                "status", "failed",
+                "message", "unauthorized action!"
+            );
+            return response;
+        }
         if (spends.getFulfilled_at() == null) {
             Wallets wallet = walletRepository.findById(spends.getWalletid()).get();
             if (wallet.getAmount() < spends.getAmount()) {
@@ -140,8 +156,15 @@ public class SpendsController {
     }
 
     @PatchMapping("/update/{id}")
-    public @ResponseBody Map<String, Object> updateSpends(@PathVariable("id") Integer id, @RequestBody Map<String, Object> payload) {
+    public @ResponseBody Map<String, Object> updateSpends(@PathVariable("id") Integer id, @RequestBody Map<String, Object> payload, HttpServletRequest request) {
         Spends spends = spendsRepository.findById(id).get();
+        if (!(spends.getUserid().equals((Integer) request.getAttribute("userId")))) {
+            Map<String, Object> response = Map.of(
+                "status", "failed",
+                "message", "unauthorized action!"
+            );
+            return response;
+        }
         if (payload.containsKey("amount")) {
             if (spends.getFulfilled_at() != null) {
                 Wallets wallet = walletRepository.findById(spends.getWalletid()).get();
@@ -166,8 +189,15 @@ public class SpendsController {
     }
 
     @PostMapping("/reverse/{id}")
-    public @ResponseBody Map<String, Object> reverseSpends(@PathVariable("id") Integer id) {
+    public @ResponseBody Map<String, Object> reverseSpends(@PathVariable("id") Integer id, HttpServletRequest request) {
         Spends spends = spendsRepository.findById(id).get();
+        if (!(spends.getUserid().equals((Integer) request.getAttribute("userId")))) {
+            Map<String, Object> response = Map.of(
+                "status", "failed",
+                "message", "unauthorized action!"
+            );
+            return response;
+        }
         if (spends.getFulfilled_at() != null) {
             spends.setFulfilled_at(null);
             spendsRepository.save(spends);

@@ -7,6 +7,7 @@ import cyou.arfsd.spendbackend.Models.Reloads;
 import cyou.arfsd.spendbackend.Models.Wallets;
 import cyou.arfsd.spendbackend.Repositories.ReloadsRepository;
 import cyou.arfsd.spendbackend.Repositories.WalletsRepository;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,15 +30,16 @@ public class ReloadsController {
     @Autowired
     private WalletsRepository walletRepository;
 
-    @GetMapping("/user/{id}")
-    public Iterable<Reloads> getUserReloads(@PathVariable Integer id) {
+    @GetMapping("/user")
+    public Iterable<Reloads> getUserReloads(HttpServletRequest request) {
+        Integer id = (Integer) request.getAttribute("userId");
         return reloadsRepository.findByUserid(id);
     }
     
     @PostMapping(value = "/create", produces = "application/json")
-    public @ResponseBody Map<String, Object> createReloads(@RequestBody Map<String, Object> payload) {
+    public @ResponseBody Map<String, Object> createReloads(@RequestBody Map<String, Object> payload, HttpServletRequest request) {
         Reloads reload = new Reloads();
-        reload.setUserid((Integer) payload.get("userid"));
+        reload.setUserid((Integer) request.getAttribute("userId"));
         reload.setAmount((Integer) payload.get("amount"));
         reload.setWalletid((Integer) payload.get("walletid"));
         reload.setRemark((String) payload.get("remark"));

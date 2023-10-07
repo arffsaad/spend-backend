@@ -1,5 +1,8 @@
 package cyou.arfsd.spendbackend.Models;
 
+import java.sql.Timestamp;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,6 +30,27 @@ public class User {
 
     private String salt;
 
+    private String token;
+
+    @Column(name = "validUntil", columnDefinition = "TIMESTAMP DEFAULT NULL", nullable = true)
+    private Timestamp validUntil;
+
+    public Timestamp getValidUntil() {
+        return validUntil;
+    }
+
+    public void setValidUntil(Timestamp validUntil){
+        this.validUntil = validUntil;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token){
+        this.token = token;
+    }
+
     public String getSalt() {
         return salt;
     }
@@ -39,8 +63,8 @@ public class User {
         return password;
     }
 
-    public void setPassword(String salt) {
-        this.salt = salt;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public Integer getId() {

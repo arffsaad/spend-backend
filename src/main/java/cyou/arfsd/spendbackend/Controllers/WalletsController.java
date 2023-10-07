@@ -18,7 +18,8 @@ import cyou.arfsd.spendbackend.Models.Wallets;
 import cyou.arfsd.spendbackend.Repositories.ReloadsRepository;
 import cyou.arfsd.spendbackend.Repositories.SpendsRepository;
 import cyou.arfsd.spendbackend.Repositories.WalletsRepository;
-import jakarta.persistence.criteria.CriteriaBuilder.In;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/v1/wallets")
@@ -33,14 +34,22 @@ public class WalletsController {
     @Autowired
     private SpendsRepository spendsRepository;
 
-    @GetMapping("/user/{id}") // Get list of wallets for user
-    public Iterable<Wallets> getUserWallets(@PathVariable Integer id) {
+    @GetMapping("/user") // Get list of wallets for user
+    public Iterable<Wallets> getUserWallets(HttpServletRequest request) {
+        Integer id = (Integer) request.getAttribute("userId");
         return walletRepository.findByUserid(id);
     }
 
     @GetMapping("/{id}") // Get wallet by id
-    public Map<String, Object> getWalletById(@PathVariable Integer id) {
+    public Map<String, Object> getWalletById(@PathVariable Integer id, HttpServletRequest request) {
         Optional<Wallets> wallet = walletRepository.findById(id);
+        Integer userid = (Integer) request.getAttribute("userId");
+        if (!(userid.equals(wallet.get().getUserid()))) {
+            return Map.of(
+                "userid", request.getAttribute("userId"),
+                "walletuserid", wallet.get().getUserid()
+            );
+        }
         List<Map<String, Object>> reloads = walletRepository.fiveReloads(id);
         List<Map<String, Object>> spends = walletRepository.fiveSpends(id);
         Integer sumOfUnfulfilledAmounts = 0;
@@ -61,9 +70,9 @@ public class WalletsController {
     }
 
     @PostMapping("/create") // Create new wallet
-    public Map<String, Object> createWallet(@RequestBody Map<String, Object> payload) {
+    public Map<String, Object> createWallet(@RequestBody Map<String, Object> payload, HttpServletRequest request) {
         Wallets wallet = new Wallets();
-        wallet.setUserid((Integer) payload.get("userid"));
+        wallet.setUserid((Integer) request.getAttribute("userId"));
         wallet.setName((String) payload.get("name"));
         Integer initialAmt = (Integer) payload.get("amount");
         Timestamp currentTime = new Timestamp(System.currentTimeMillis());
