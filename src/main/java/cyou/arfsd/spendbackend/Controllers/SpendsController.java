@@ -53,7 +53,7 @@ public class SpendsController {
         Integer id = (Integer) request.getAttribute("userId");
         List<Map<String, Object>> spends = spendsRepository.userSummary(id);
         Integer sumOfUnfulfilledAmounts = 0;
-        if (spendsRepository.UnfulfilledSpends() != 0) {
+        if (spendsRepository.UnfulfilledSpends(id) != 0) {
             sumOfUnfulfilledAmounts = spendsRepository.getSumOfUnfulfilledAmounts(id);
         }
         Map<String, Object> response = Map.of(

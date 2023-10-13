@@ -101,6 +101,9 @@ public class AuthController {
     public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, Object> payload) {
         HashHelper hashHelper = new HashHelper();
         User user = userRepository.findByName(((String) payload.get("name")).trim());
+        if (user == null){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("status", "failed", "message", "Username/Password does not match."));
+        }
         if(hashHelper.auth((String) user.getSalt(), (String) payload.get("password"), user.getPassword())) {
             String sessToken = hashHelper.genToken();
             user.setToken(sessToken);
