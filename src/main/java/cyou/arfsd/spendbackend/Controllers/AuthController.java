@@ -42,8 +42,8 @@ public class AuthController {
                     .body(new ResponseHelper().returnError("failed", "exists"));
         }
         Map<String, Object> response = Map.of(
-                "message", "success",
-                "reason", "Please proceed");
+                "status", "success",
+                "message", "Please proceed");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -60,8 +60,8 @@ public class AuthController {
                     .body(new ResponseHelper().returnError("failed", "expired token"));
         }
         Map<String, Object> response = Map.of(
-                "message", "success",
-                "reason", "Please proceed");
+                "status", "success",
+                "message", "Please proceed");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -72,7 +72,7 @@ public class AuthController {
         long existed = userRepository.checkExisting((String) payload.get("email"), (String) payload.get("name"));
         if (existed >= 1) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ResponseHelper().returnError("Registration Failed!", "User exists!"));
+                    .body(new ResponseHelper().returnError("failed", "Email exists!"));
         }
         // Initialize new user with name, email, and 0 balance.
         User user = new User();
@@ -90,7 +90,8 @@ public class AuthController {
         // once we implement proper auth, return auth token here (API token/secret/or
         // wtv the fuck token we use) as to allow auto login after reg
         Map<String, Object> response = Map.of(
-                "message", "Register Success!",
+                "status", "success",
+                "message", "register success",
                 "data", user);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -108,16 +109,20 @@ public class AuthController {
             userRepository.save(user);
     
             Map<String, Object> response = Map.of(
-                "user", user.getName(),
-                "token", user.getToken(),
-                "id", user.getId(),
-                "email", user.getEmail()
+                "status", "success",
+                "message", "login success",
+                "data", Map.of(
+                    "user", user.getName(),
+                    "token", user.getToken(),
+                    "id", user.getId(),
+                    "email", user.getEmail()
+                )
             );
             return ResponseEntity.status(HttpStatus.OK).body(response);
         }
         else {
             ResponseHelper responseHelper = new ResponseHelper();
-            return ResponseEntity.status(HttpStatus.OK).body(responseHelper.returnError("Auth failed!", "check credentials"));
+            return ResponseEntity.status(HttpStatus.OK).body(responseHelper.returnError("failed", "Username/Password does not match."));
         }
     }
 
@@ -129,6 +134,7 @@ public class AuthController {
         user.setValidUntil(null);
         userRepository.save(user);
         Map<String, Object> response = Map.of(
+                "status", "success",
                 "message", "logout success"
             );
         return ResponseEntity.status(HttpStatus.OK).body(response);

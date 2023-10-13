@@ -1,6 +1,8 @@
 package cyou.arfsd.spendbackend.Controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import cyou.arfsd.spendbackend.Models.Reloads;
@@ -10,12 +12,9 @@ import cyou.arfsd.spendbackend.Repositories.WalletsRepository;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-
 
 import java.sql.Timestamp;
 import java.util.Map;
@@ -29,15 +28,34 @@ public class ReloadsController {
 
     @Autowired
     private WalletsRepository walletRepository;
+    
+    private Iterable<Reloads> emptyIterator() {
+        return null;
+    }
 
     @GetMapping("/user")
-    public Iterable<Reloads> getUserReloads(HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> getUserReloads(HttpServletRequest request) {
         Integer id = (Integer) request.getAttribute("userId");
-        return reloadsRepository.findByUserid(id);
+        Iterable<Reloads> reloads = emptyIterator();
+        try {
+            reloads = reloadsRepository.findByUserid(id);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.OK).body(Map.of(
+                "status", "oops",
+                "message", "no reloads/server error",
+                "data", reloads
+            ));
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of(
+            "status", "success",
+            "message", "Reloads Found",
+            "data", reloads
+        ));
     }
     
+
     @PostMapping(value = "/create", produces = "application/json")
-    public @ResponseBody Map<String, Object> createReloads(@RequestBody Map<String, Object> payload, HttpServletRequest request) {
+    public ResponseEntity<Map<String,Object>> createReloads(@RequestBody Map<String, Object> payload, HttpServletRequest request) {
         Reloads reload = new Reloads();
         reload.setUserid((Integer) request.getAttribute("userId"));
         reload.setAmount((Integer) payload.get("amount"));
@@ -58,7 +76,7 @@ public class ReloadsController {
             "data", reload
         );
 
-        return response;
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
         
     }
 }

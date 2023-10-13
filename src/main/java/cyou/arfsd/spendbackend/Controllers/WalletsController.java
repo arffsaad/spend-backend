@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +20,6 @@ import cyou.arfsd.spendbackend.Models.Wallets;
 import cyou.arfsd.spendbackend.Repositories.ReloadsRepository;
 import cyou.arfsd.spendbackend.Repositories.SpendsRepository;
 import cyou.arfsd.spendbackend.Repositories.WalletsRepository;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
@@ -35,20 +36,34 @@ public class WalletsController {
     private SpendsRepository spendsRepository;
 
     @GetMapping("/user") // Get list of wallets for user
-    public Iterable<Wallets> getUserWallets(HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> getUserWallets(HttpServletRequest request) {
         Integer id = (Integer) request.getAttribute("userId");
-        return walletRepository.findByUserid(id);
+        Iterable<Wallets> wallets = null;
+        try {
+            wallets = walletRepository.findByUserid(id);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "status", "oops",
+                "message", "no data/server error",
+                "data", wallets
+            ));
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of(
+            "status", "success",
+            "message", "wallets retrieved",
+            "data", wallets
+        ));
     }
 
     @GetMapping("/{id}") // Get wallet by id
-    public Map<String, Object> getWalletById(@PathVariable Integer id, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> getWalletById(@PathVariable Integer id, HttpServletRequest request) {
         Optional<Wallets> wallet = walletRepository.findById(id);
         Integer userid = (Integer) request.getAttribute("userId");
         if (!(userid.equals(wallet.get().getUserid()))) {
-            return Map.of(
-                "userid", request.getAttribute("userId"),
-                "walletuserid", wallet.get().getUserid()
-            );
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "status", "failed",
+                "message", "Wallet not found!"
+            ));
         }
         List<Map<String, Object>> reloads = walletRepository.fiveReloads(id);
         List<Map<String, Object>> spends = walletRepository.fiveSpends(id);
@@ -57,20 +72,23 @@ public class WalletsController {
             sumOfUnfulfilledAmounts = walletRepository.walletSumOfUnfulfilledAmounts(id);
         }
         Map<String, Object> response = Map.of(
-            "id", wallet.get().getId(),
-            "name", wallet.get().getName(),
-            "amount", wallet.get().getAmount(),
-            "createdtime", wallet.get().getCreatedtime(),
-            "userid", wallet.get().getUserid(),
-            "reloads", reloads,
-            "spends", spends,
-            "unfulfilledAmounts", sumOfUnfulfilledAmounts
+            "status", "success",
+            "message", "wallet retrieved",
+            "data", Map.of(
+                "id", wallet.get().getId(),
+                "name", wallet.get().getName(),
+                "amount", wallet.get().getAmount(),
+                "createdtime", wallet.get().getCreatedtime(),
+                "userid", wallet.get().getUserid(),
+                "reloads", reloads,
+                "spends", spends,
+                "unfulfilledAmounts", sumOfUnfulfilledAmounts)
         );
-        return response;
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PostMapping("/create") // Create new wallet
-    public Map<String, Object> createWallet(@RequestBody Map<String, Object> payload, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> createWallet(@RequestBody Map<String, Object> payload, HttpServletRequest request) {
         Wallets wallet = new Wallets();
         wallet.setUserid((Integer) request.getAttribute("userId"));
         wallet.setName((String) payload.get("name"));
@@ -91,10 +109,10 @@ public class WalletsController {
 
         Map<String, Object> response = Map.of(
             "status", "success",
-            "message", "wallet created",
+            "message", "Wallet created!",
             "data", wallet
         );
 
-        return response;
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

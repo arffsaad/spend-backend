@@ -3,18 +3,9 @@ package cyou.arfsd.spendbackend.Utils;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Random;
-
-import org.springframework.beans.factory.annotation.Autowired;
-
 import com.google.common.hash.Hashing;
-
-import cyou.arfsd.spendbackend.Models.User;
-import cyou.arfsd.spendbackend.Repositories.UserRepository;
-
 public class HashHelper {
 
-    @Autowired
-    private UserRepository userRepository;
 
     public Map<String, Object> generateHashed(String pass) {
         int leftLimit = 48; // numeral '0'
