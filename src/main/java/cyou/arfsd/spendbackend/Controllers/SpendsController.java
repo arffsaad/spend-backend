@@ -146,7 +146,7 @@ public class SpendsController {
 
         Map<String, Object> response = Map.of(
             "status", "success",
-            "message", "Spending Fulfilled",
+            "message", "Spending Fulfilled!",
             "data", spends
         );
 
@@ -205,7 +205,7 @@ public class SpendsController {
         }
         Map<String, Object> response = Map.of(
             "status", "success",
-            "message", "spending reversed",
+            "message", "Spending reversed!",
             "data", spends
         );
 
