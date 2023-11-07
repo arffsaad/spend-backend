@@ -1,0 +1,10 @@
+spring.jpa.hibernate.ddl-auto=update
+spring.datasource.url=jdbc:mysql://127.0.0.1:3306/databaseName
+spring.datasource.username=databaseUser
+spring.datasource.password=databasePass
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+#spring.jpa.show-sql: true
+
+## MINIO/S3 CREDENTIALS ##
+minio.auth.accessKey=S3/MINIOACCESSKEY
+minio.auth.secretKey=S3/MINIOSECRETKEY
