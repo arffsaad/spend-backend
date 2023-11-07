@@ -62,7 +62,7 @@ public class SpendsController {
             "data", spends,
             "UnfulfilledAmount", sumOfUnfulfilledAmounts
         );
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PostMapping("/create")
