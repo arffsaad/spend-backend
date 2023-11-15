@@ -20,6 +20,12 @@ public class Spends {
     private String remark;
     private String recslug;
 
+    @Column(name = "is_instalment", columnDefinition = "boolean default false")
+    private Boolean isInstalment;
+
+    @Column(name = "instalment_id", columnDefinition = "integer default null", nullable = true)
+    private Integer instalmentId;
+
     @Column(name = "fulfilled_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Timestamp fulfilled_at;
 
@@ -77,5 +83,21 @@ public class Spends {
 
     public void setRecslug(String recslug){
         this.recslug=recslug;
+    }
+
+    public void setIsInstalment(Boolean isInstalment) {
+        this.isInstalment = isInstalment;
+    }
+
+    public Boolean getIsInstalment() {
+        return isInstalment;
+    }
+
+    public void setInstalmentId(Integer instalmentId) {
+        this.instalmentId = instalmentId;
+    }
+
+    public Integer getInstalmentId() {
+        return instalmentId;
     }
 }

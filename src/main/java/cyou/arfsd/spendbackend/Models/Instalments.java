@@ -16,6 +16,7 @@ public class Instalments {
     private Integer amountLeft;
     private Integer amountDue;
     private Integer months;
+    private Integer monthly;
     private Integer dueDate;
 
     public Integer getId() {
@@ -72,5 +73,13 @@ public class Instalments {
 
     public void setMonths(Integer months){
         this.months=months;
+    }
+
+    public Integer getMonthly(){
+        return monthly;
+    }
+
+    public void setMonthly(Integer monthly){
+        this.monthly=monthly;
     }
 }

@@ -1,6 +1,7 @@
 package cyou.arfsd.spendbackend.Controllers;
 
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -56,12 +57,14 @@ public class InstalmentsController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                 "status", "failed",
                 "message", "Not Found!"
-            ));
-        }
+                ));
+            }
+        List<Map<String, Object>> instalmentPayments = spends.instalmentPayments(id);
         Map<String, Object> response = Map.of(
             "status", "success",
             "message", "instalment retrieved",
-            "data", instalments
+            "data", instalment,
+            "payments", instalmentPayments
         );
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -75,6 +78,8 @@ public class InstalmentsController {
         instalment.setAmountLeft((Integer) payload.get("totalAmt"));
         instalment.setAmountDue(0);
         instalment.setMonths((Integer) payload.get("months"));
+        Integer monthly = (Integer) payload.get("totalAmt") / (Integer) payload.get("months");
+        instalment.setMonthly(monthly);
         instalment.setDueDate((Integer) payload.get("dueDate"));
         instalments.save(instalment);
         Map<String, Object> response = Map.of(
@@ -132,6 +137,8 @@ public class InstalmentsController {
         spend.setAmount(amountPaid);
         spend.setRemark("Instalment payment for " + instalment.get().getName());
         spend.setWalletid(wallet.getId());
+        spend.setIsInstalment(true);
+        spend.setInstalmentId(instalment.get().getId());
         spend.setRecslug(null);
 
         Timestamp currentTime = new Timestamp(System.currentTimeMillis());
