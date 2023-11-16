@@ -27,6 +27,14 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestController
 @RequestMapping("/api/v1/spending")
 public class SpendsController {
+
+    private final MinioHelper minioHelper;
+
+    public SpendsController(MinioHelper minioHelper) {
+        this.minioHelper = minioHelper;
+    }
+
+
     @Autowired
     private SpendsRepository spendsRepository;
 
@@ -99,8 +107,7 @@ public class SpendsController {
             
         }
         if (receipt != null) {
-            MinioHelper minioHelper = new MinioHelper("http://127.0.0.1:9000", "spend-bucket", user.getName());
-            Map<String, Object> uploadResponse = minioHelper.UploadFile(receipt, "spend-bucket", user.getName());
+            Map<String, Object> uploadResponse = minioHelper.uploadFile(receipt, user.getName());
             spends.setRecslug( "/" + uploadResponse.get("fileName").toString());
         }
         else {

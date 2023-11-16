@@ -1,1 +1,13 @@
 # Work in progress.
+
+# Environment Variables
+
+- MYSQL_HOST
+- MYSQL_PORT
+- MYSQL_DB
+- MYSQL_USER
+- MYSQL_PASS
+- MINIO_ACCESS_KEY
+- MINIO_SECRET_KEY
+- MINIO_HOST
+- MINIO_BUCKET_NAME
