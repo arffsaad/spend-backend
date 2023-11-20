@@ -125,7 +125,7 @@ public class AuthController {
         }
         else {
             ResponseHelper responseHelper = new ResponseHelper();
-            return ResponseEntity.status(HttpStatus.OK).body(responseHelper.returnError("failed", "Username/Password does not match."));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseHelper.returnError("failed", "Username/Password does not match."));
         }
     }
 

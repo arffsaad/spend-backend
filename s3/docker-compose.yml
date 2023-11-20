@@ -3,23 +3,30 @@ services:
   java-mysql:
     image: mysql:5
     environment:
-      - MYSQL_ROOT_PASSWORD=rootPass # Change this
+      - MYSQL_ROOT_PASSWORD=A7cb4fgh # Change this
     volumes:
       - .\init.sql:/docker-entrypoint-initdb.d/init.sql
+      - .\mysql:/var/lib/mysql
     ports:
       - "3306:3306"
       - "33060:33060"
   java-minio:
     image: quay.io/minio/minio:latest
     environment:
-      - MINIO_ROOT_USER=adminUser # Change this
-      - MINIO_ROOT_PASSWORD=adminPass # Change this
+      - MINIO_ROOT_USER=serverAdm # Change this
+      - MINIO_ROOT_PASSWORD=A7cb4fgh # Change this
     volumes:
       - .\minio\:/data
     ports:
       - "9000:9000"
       - "9090:9090"
     command: server /data --console-address ":9090"
+  java-server:
+    image: spend-backend:1.0
+    ports:
+      - "8080:8080"
+    depends_on:
+      - java-mysql
 networks:
   java-backend:
     driver: bridge
