@@ -15,7 +15,7 @@ jobs:
       RUNNING_WITHIN_CI_PIPELINE: 1
       GIT_USERNAME_OR_ORG: arffsaad
       GIT_REPO_NAME: spend-backend
-      APP_NAME: container-55iiik0
+      APP_NAME: container-vhokass
       SSH_CONFIG_FILE: /dev/null
       AMBER_SECRET: ${{ secrets.AMBER_SECRET }}
       DOKKU_SSH_PRIVATE_KEY: ${{ secrets.DOKKU_SSH_PRIVATE_KEY}}
